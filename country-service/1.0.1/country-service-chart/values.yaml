@@ -1,0 +1,16 @@
+replicaCount: 2
+revisionHistoryLimit: 1
+run: country
+image:
+  Repository: msldn/country
+  Tag: 1.0.1
+health:
+  ready:
+    Path: /health/ready
+    Port: 8080
+  live:
+    Path: /health/live
+    Port: 8080
+service:
+  Port: 8080
+  Type: NodePort

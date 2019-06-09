@@ -1,0 +1,57 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: "{{ .Values.run }}"
+    chart: '{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}'
+  name: "{{ .Release.Name }}-deployment"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  selector:
+    matchLabels:
+      run: "{{ .Values.run }}"
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        run: "{{ .Values.run }}"
+    spec:
+      containers:
+      - image: "{{ .Values.image.Repository }}:{{ .Values.image.Tag }}"
+        imagePullPolicy: Always
+        name: "{{ .Release.Name }}"
+        readinessProbe:
+          httpGet:
+            path: "{{ .Values.health.ready.Path }}"
+            port: {{ .Values.health.ready.Port }}
+          initialDelaySeconds: 20
+          periodSeconds: 180
+          timeoutSeconds: 180
+          successThreshold: 1
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: "{{ .Values.health.live.Path }}"
+            port: {{ .Values.health.live.Port }}
+          initialDelaySeconds: 20
+          periodSeconds: 180
+          timeoutSeconds: 180
+          successThreshold: 1
+          failureThreshold: 3
+        ports:
+        - containerPort: {{ .Values.service.Port }}
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
